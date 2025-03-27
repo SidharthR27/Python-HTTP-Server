@@ -25,9 +25,7 @@ class MyServer:
                     <h1>Welcome to the server!</h1>
                     <h2>Server address: 127.0.0.1:1234</h2>
                     <h3>You're connected through address: {client_address[0]}:{client_address[1]}</h3>
-                    <body>
-                        <pre>{data.decode("utf-8")}<pre>
-                    </body>
+                    <pre>{data.decode("utf-8")}</pre>
                 </body>
             </html>
             \r\n\r\n
