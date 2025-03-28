@@ -7,17 +7,21 @@ class MyServer:
         self.server_socket.listen(5)
     
     def run_server(self):
-        while True:
-            (client_socket, client_address) = self.server_socket.accept()
-            request_data = client_socket.recv(1024)
-            print('Data from client received')
-            method, path, body = self.find_request_method(request_data)
-            if method == "GET":
-                self.get_response(client_socket,client_address,request_data)
-            elif method == "POST":
-                self.post_response(client_socket,client_address,body)
-            else:
-                return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed"
+        try:
+            while True:
+                (client_socket, client_address) = self.server_socket.accept()
+                request_data = client_socket.recv(1024)
+                print('Data from client received')
+                method, path, body = self.find_request_method(request_data)
+                if method == "GET":
+                    self.get_response(client_socket,client_address,request_data)
+                elif method == "POST":
+                    self.post_response(client_socket,client_address,body)
+                else:
+                    return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed"
+        except KeyboardInterrupt:
+            self.server_socket.close()
+            print("Server socket closed.")
 
     def find_request_method(self,request_data):
         request_data = request_data.decode()
