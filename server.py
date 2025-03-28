@@ -11,15 +11,14 @@ class MyServer:
             (client_socket, client_address) = self.server_socket.accept()
             request_data = client_socket.recv(1024)
             print('Data from client received')
-            method, path = self.find_request_method(request_data)
+            method, path, body = self.find_request_method(request_data)
             if method == "GET":
                 self.get_response(client_socket,client_address,request_data)
             elif method == "POST":
-                pass
+                self.post_response(client_socket,client_address,body)
             else:
                 return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed"
 
-    
     def find_request_method(self,request_data):
         request_data = request_data.decode()
         headers, body = request_data.split("\r\n\r\n", 1) if "\r\n\r\n" in request_data else (request_data, "")
@@ -31,7 +30,7 @@ class MyServer:
 
         method, path = request_line[:2]
         print(method,path)
-        return (method,path)
+        return (method,path,body)
 
     def get_response(self,client_socket,client_address,request_data):
         # send back data
@@ -55,8 +54,27 @@ class MyServer:
         client_socket.close()
         # server_socket.close()
     
-    def post_response(self,client_socket,client_address,request_data):
-        pass
+    def post_response(self,client_socket,client_address,body):
+         # send back data
+        client_socket.sendall(
+            bytes(f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
+            \r\n
+            <!doctype html>
+            <html>
+                <head/>
+                <body>
+                    <h1>Welcome to the server!</h1>
+                    <h2>Server address: 127.0.0.1:1234</h2>
+                    <h3>You've sent POST request from address: {client_address[0]}:{client_address[1]}</h3>
+                    <h4>Your POST data is :</h4>
+                    <pre>{body}</pre>
+                </body>
+            </html>
+            \r\n\r\n
+            """, "utf-8")
+        )
+        print('Data to client sent')
+        client_socket.close()
 
 my_server = MyServer()
 my_server.run_server()
