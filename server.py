@@ -1,10 +1,26 @@
 import socket
+import sqlite3
 
 class MyServer:
     def __init__(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('localhost', 1234))
         self.server_socket.listen(5)
+
+        self.init_db()
+
+    def init_db(self):
+        """Creates a database and a table if they don't exist"""
+        conn = sqlite3.connect("server_data.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
     
     def run_server(self):
         try:
@@ -18,7 +34,8 @@ class MyServer:
                 elif method == "POST":
                     self.post_response(client_socket,client_address,body)
                 else:
-                    return "HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed"
+                    client_socket.sendall(b"HTTP/1.1 405 Method Not Allowed\r\n\r\nMethod Not Allowed")
+                    client_socket.close()
         except KeyboardInterrupt:
             self.server_socket.close()
             print("Server socket closed.")
@@ -37,47 +54,55 @@ class MyServer:
         return (method,path,body)
 
     def get_response(self,client_socket,client_address,request_data):
+        conn = sqlite3.connect("server_data.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM messages")
+        rows = cursor.fetchall()
+        conn.close()
+
+        messages_list = [f"<li>{row[1]}</li>" for row in rows]
+        messages_html = "".join(messages_list)
+
         # send back data
-        client_socket.sendall(
-            bytes(f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
-            \r\n
-            <!doctype html>
-            <html>
-                <head/>
-                <body>
-                    <h1>Welcome to the server!</h1>
-                    <h2>Server address: 127.0.0.1:1234</h2>
-                    <h3>You're connected through address: {client_address[0]}:{client_address[1]}</h3>
-                    <pre>{request_data.decode("utf-8")}</pre>
-                </body>
-            </html>
-            \r\n\r\n
-            """, "utf-8")
-        )
-        print('Data to client sent')
+        response = f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
+        \r\n
+        <!doctype html>
+        <html>
+            <head/>
+            <body>
+                <h1>Stored Messages</h1>
+                <ul>{messages_html}</ul>
+            </body>
+        </html>
+        \r\n\r\n
+        """
+        client_socket.sendall(response.encode("utf-8"))
         client_socket.close()
         # server_socket.close()
     
     def post_response(self,client_socket,client_address,body):
-         # send back data
-        client_socket.sendall(
-            bytes(f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
-            \r\n
-            <!doctype html>
-            <html>
-                <head/>
-                <body>
-                    <h1>Welcome to the server!</h1>
-                    <h2>Server address: 127.0.0.1:1234</h2>
-                    <h3>You've sent POST request from address: {client_address[0]}:{client_address[1]}</h3>
-                    <h4>Your POST data is :</h4>
-                    <pre>{body}</pre>
-                </body>
-            </html>
-            \r\n\r\n
-            """, "utf-8")
-        )
-        print('Data to client sent')
+        """Extract data from POST request and insert it into SQLite"""
+        message = body.strip()
+        
+        conn = sqlite3.connect("server_data.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO messages (message) VALUES (?)", (message,))
+        conn.commit()
+        conn.close()
+
+        response = f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
+        \r\n
+        <!doctype html>
+        <html>
+            <head/>
+            <body>
+                <h1>POST Request Received</h1>
+                <p>Message stored in database: {message}</p>
+            </body>
+        </html>
+        \r\n\r\n
+        """
+        client_socket.sendall(response.encode("utf-8"))
         client_socket.close()
 
 my_server = MyServer()
