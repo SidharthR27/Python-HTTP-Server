@@ -63,7 +63,6 @@ class MyServer:
         messages_list = [f"<li>{row[1]}</li>" for row in rows]
         messages_html = "".join(messages_list)
 
-        # send back data
         response = f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
         \r\n
         <!doctype html>
@@ -78,7 +77,6 @@ class MyServer:
         """
         client_socket.sendall(response.encode("utf-8"))
         client_socket.close()
-        # server_socket.close()
     
     def post_response(self,client_socket,client_address,body):
         """Extract data from POST request and insert it into SQLite"""
