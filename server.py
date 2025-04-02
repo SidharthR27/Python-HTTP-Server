@@ -63,17 +63,14 @@ class MyServer:
         messages_list = [f"<li>{row[1]}</li>" for row in rows]
         messages_html = "".join(messages_list)
 
-        response = f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
-        \r\n
+        response = f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r\n\r\n
         <!doctype html>
         <html>
-            <head/>
             <body>
                 <h1>Stored Messages</h1>
                 <ul>{messages_html}</ul>
             </body>
         </html>
-        \r\n\r\n
         """
         client_socket.sendall(response.encode("utf-8"))
         client_socket.close()
@@ -88,17 +85,14 @@ class MyServer:
         conn.commit()
         conn.close()
 
-        response = f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r
-        \r\n
+        response = f"""HTTP/1.1 200 OK\r\nContent-type: text/html\r\nSet-Cookie: ServerName=sidsPythonServer\r\n\r\n
         <!doctype html>
         <html>
-            <head/>
             <body>
                 <h1>POST Request Received</h1>
                 <p>Message stored in database: {message}</p>
             </body>
         </html>
-        \r\n\r\n
         """
         client_socket.sendall(response.encode("utf-8"))
         client_socket.close()
